@@ -26,6 +26,7 @@ Determine current state by looking at what exists on disk. **Check in this order
 | Check | If missing | If present |
 |---|---|---|
 | `agentic.config.yaml` at repo root | → run **`config-bootstrap`** skill. Nothing else may proceed. | continue |
+| A raw spec draft, and the PO wants help writing one | → offer **`spec-writer`** skill. **Optional** — skip straight to spec-judge if the PO would rather write the template directly. | continue |
 | `/agent-handoffs/specs/<spec_id>/*.sealed.yaml` | → run **`spec-judge`** skill | continue |
 | `WireframeSpec`, when sealed spec has `needs_prototype: true` | → dispatch **`prototyper`** agent | continue |
 | Implementation + `VerificationLog` | → dispatch build agents (below) | continue |
@@ -37,13 +38,16 @@ If the user names a stage explicitly ("seal this spec", "bootstrap config"), hon
 ## Stage map
 
 ```
-Stage B   Config Agent      config-bootstrap skill    ONCE PER REPO — not per spec
-Stage 0/1 Spec intake+judge spec-judge skill          interactive with the PO
+Stage B   Config Agent      config-bootstrap skill    ONCE PER REPO — not per spec, runs first
+Stage P   Spec drafting     spec-writer skill         OPTIONAL, collaborative — no gate
+Stage 0/1 Spec intake+judge spec-judge skill          interactive with the PO, adversarial
 Stage 2   Prototyping       prototyper agent          only if needs_prototype
 Stage 3   Build loop        backend-dev · frontend-dev · qa-engineer   ← parallel
 Stage 4-6 Verification      verifier agent            3 passes, 3 verdicts, one context
 Stage 7/8 Release + HITL    ship-release skill        human approves the merge
 ```
+
+**Stage P is deliberately not Stage 1.** `spec-writer` is collaborative (it drafts with the PO); `spec-judge` is adversarial (it interrogates the draft). Keeping them as separate skills means the same agent never both helps write a spec and grades it — the grilling pass in Stage 1 runs at full rigor regardless of whether Stage P happened.
 
 ## Dispatching the build phase (Stage 3)
 
@@ -61,7 +65,7 @@ Empirical evidence in this design's source material: agent quality **peaked at ~
 
 So:
 - **Security, Architecture Watchdog, and QA-gate are ONE agent** (`verifier`) running three sequential passes in a shared context, emitting three **independently-vetoable** verdicts. Separate accountability, shared context — never a merged or averaged score.
-- **Interactive interrogations are skills, not subagents.** `config-bootstrap` and `spec-judge` are conversations with a human; a subagent cannot have that back-and-forth.
+- **Interactive interrogations are skills, not subagents.** `config-bootstrap`, `spec-writer`, and `spec-judge` are conversations with a human; a subagent cannot have that back-and-forth.
 - **Only the build phase runs parallel**, because that is the one place the work is genuinely concurrent.
 
 ## Hard invariants

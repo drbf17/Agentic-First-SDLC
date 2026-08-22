@@ -1,6 +1,6 @@
 # Agentic-First SDLC
 
-A spec-driven development lifecycle for Claude Code: five skills and five subagents that take a feature from a Product Owner's written spec through implementation, verification, and a human-approved merge — with deterministic quality gates enforced inside the development loop rather than requested in a prompt.
+A spec-driven development lifecycle for Claude Code: six skills and five subagents that take a feature from a Product Owner's written spec through implementation, verification, and a human-approved merge — with deterministic quality gates enforced inside the development loop rather than requested in a prompt.
 
 Distributed as a Claude Code plugin. Install once per repo; teammates get it automatically.
 
@@ -42,16 +42,21 @@ Tier 1 is the strongest instrument available, and it is the only tier a workflow
 
 ## Architecture
 
-### Ten components, three groups
+### Eleven components, three groups
 
 ```
-                        ┌─ Stage B ────────────────────────────────┐
+                        ┌─ Stage B ──────────────────────────────────┐
                         │  config-bootstrap  (skill, interactive)  │  ONCE PER REPO
-                        │  → writes agentic.config.yaml            │
+                        │  → writes agentic.config.yaml            │  runs first
                         └──────────────────┬───────────────────────┘
+                        ┌─ Stage P (optional) ─────────────▼─────────┐
+                        │  spec-writer  (skill, interactive)         │  collaborative,
+                        │  → drafts a raw spec with the PO           │  no gate, skippable
+                        └──────────────────┬──────────────────────┘
                                            │ binds everything below
    ┌───────────────────────────────────────▼──────────────────────────────────┐
    │  Stage 0/1   spec-judge      (skill, interactive)  → SealedSpec           │
+   │              adversarial — full rigor regardless of Stage P              │
    │  Stage 2     prototyper      (agent)               → WireframeSpec        │
    │                                                                           │
    │  Stage 3     backend-dev ─┐                                               │
@@ -77,8 +82,9 @@ So:
 
 | Component | Type | Why |
 |---|---|---|
+| `spec-writer` | **skill**, optional | Collaborative drafting with a human. Deliberately a *different* skill from `spec-judge` — the agent that helps write a spec shouldn't also be the one grading it. |
 | `config-bootstrap` | **skill** | It is an interrogation of a human. A subagent can't conduct one. |
-| `spec-judge` | **skill** | Same — it grills the PO across up to 5 iterations of dialogue. |
+| `spec-judge` | **skill** | Same — it grills the PO across up to 5 iterations of dialogue, adversarially. |
 | `verify-gate`, `ship-release` | **skills** | Procedures the main agent follows, with human decision points. |
 | `backend-dev`, `frontend-dev`, `qa-engineer` | **agents** | Genuinely concurrent work on separate file boundaries. |
 | `prototyper`, `verifier` | **agents** | Context-heavy analysis producing a structured report. |
@@ -101,6 +107,7 @@ This is the Determinism Principle applied to tool grants: **remove the capabilit
 
 | Stage | Gate | Threshold |
 |---|---|---|
+| P *(optional)* | none — `spec-writer` never scores or blocks | n/a |
 | B | mandatory check categories configured or waived | **4 of 4** (lint · typecheck · static · SAST) |
 | 1 | spec ambiguity | avg **< 0.15** AND max item **≤ 0.4**, ≤ 5 iterations |
 | 2 | acceptance criteria traced to screens | 100%, 6 gates incl. blocking PII scan |
@@ -141,7 +148,7 @@ In any repo where you want the workflow:
 /plugin install agentic-sdlc@agentic-first-sdlc
 ```
 
-Verify: `/plugin list` shows `agentic-sdlc`, and typing `/` lists the five skills.
+Verify: `/plugin list` shows `agentic-sdlc`, and typing `/` lists the six skills.
 
 ### Option B — auto-bootstrap your whole team (recommended for shared repos)
 
@@ -218,6 +225,12 @@ Output: `agentic.config.yaml` at your repo root. Nothing else in the pipeline ru
 
 **1. Write the spec.** Copy [`reference/spec-template.md`](plugins/agentic-sdlc/reference/spec-template.md), fill it in, save to `agent-handoffs/specs/<spec_id>/<spec_id>.v0.raw.md`.
 
+> **Don't know where to start? This step is optional.**
+> ```
+> You:  /spec-writer  I want to add guest checkout to the cart flow
+> ```
+> `spec-writer` talks through the feature with you in plain language and fills in the template on your behalf — including a starting-point number for NFRs you're unsure of (marked `# DRAFT` so the next step knows exactly where to press). It never scores or blocks anything; if you'd rather fill in the template yourself, skip straight to step 2.
+
 **2. Get grilled.**
 
 ```
@@ -293,6 +306,7 @@ Opens the PR with the scorecard attached, deploys to staging, runs smoke tests, 
 |---|---|
 | "What stage am I in?" | `/agentic-sdlc` |
 | Set up a new repo | `/config-bootstrap` |
+| Help drafting a spec (optional) | `/spec-writer` |
 | Seal a spec | `/spec-judge <path>` |
 | Run the gates | `/verify-gate` |
 | Open the PR | `/ship-release` |
@@ -307,10 +321,11 @@ agentic-first-sdlc/
 ├── .claude-plugin/marketplace.json      ← marketplace manifest (edit REPLACE-ME)
 ├── plugins/agentic-sdlc/
 │   ├── .claude-plugin/plugin.json
-│   ├── skills/                          ← 5 skills, auto-discovered
+│   ├── skills/                          ← 6 skills, auto-discovered
 │   │   ├── agentic-sdlc/SKILL.md        ← router
+│   │   ├── spec-writer/SKILL.md         ← Stage P, optional, collaborative
 │   │   ├── config-bootstrap/SKILL.md    ← Stage B
-│   │   ├── spec-judge/SKILL.md          ← Stages 0-1
+│   │   ├── spec-judge/SKILL.md          ← Stages 0-1, adversarial
 │   │   ├── verify-gate/SKILL.md         ← Stages 4-6
 │   │   └── ship-release/SKILL.md        ← Stages 7-8
 │   ├── agents/                          ← 5 subagents

@@ -15,6 +15,8 @@ You do not write code. You do not design UX. You interrogate specifications unti
 
 `agentic.config.yaml` must exist at repo root. If it doesn't, stop and run `config-bootstrap` first — sealing specs into a repo that cannot verify itself is pointless.
 
+**A submission may have been drafted with help from the optional `spec-writer` skill.** Treat it exactly the same as a spec the PO wrote unassisted — full checklist, full open loop, full scoring, no shortcuts. If you see a `# DRAFT — PO unconfirmed` comment on a field, that is a signal of where to press first, not a reason to trust the field. `spec-writer` drafts; it does not grade, and its involvement changes nothing about your rigor here.
+
 ## Stage 0 — Intake (a parser check, not a judgment call)
 
 Accept **only** YAML frontmatter + markdown body, submitted as a `.md` file. Template: [reference/spec-template.md](../../reference/spec-template.md)
