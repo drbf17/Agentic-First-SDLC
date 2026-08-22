@@ -1,0 +1,18 @@
+{
+  "version": "1",
+  "plugins": [
+    {
+      "name": "agentic-sdlc",
+      "displayName": "Agentic-First SDLC",
+      "description": "Spec-driven, gate-enforced development lifecycle. Config Agent bootstraps deterministic checks; Spec Judge grills the PO until the spec is unambiguous; parallel build agents implement against a locked contract; a single verifier runs Security, Architecture, and QA as three independently-vetoable passes.",
+      "version": "1.0.0",
+      "author": "Agentic-First SDLC",
+      "source": {
+        "source": "github",
+        "repo": "REPLACE-ME/agentic-first-sdlc",
+        "path": "plugins/agentic-sdlc",
+        "ref": "main"
+      }
+    }
+  ]
+}

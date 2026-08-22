@@ -1,0 +1,17 @@
+{
+  "_comment": "Copy this into .claude/settings.json in any repo that should use the Agentic-First SDLC, and commit it. Teammates are prompted to trust the marketplace on first launch, after which the plugin installs and updates automatically. Replace REPLACE-ME with your GitHub org/user.",
+
+  "extraKnownMarketplaces": {
+    "agentic-first-sdlc": {
+      "source": {
+        "source": "github",
+        "repo": "REPLACE-ME/agentic-first-sdlc"
+      },
+      "autoUpdate": true
+    }
+  },
+
+  "enabledPlugins": [
+    "agentic-sdlc@agentic-first-sdlc"
+  ]
+}

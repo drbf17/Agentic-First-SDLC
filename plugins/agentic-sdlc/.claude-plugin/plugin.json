@@ -1,0 +1,17 @@
+{
+  "name": "agentic-sdlc",
+  "displayName": "Agentic-First SDLC",
+  "version": "1.0.0",
+  "description": "Spec-driven, gate-enforced development lifecycle with deterministic verification enforced inside the development loop.",
+  "author": {
+    "name": "Agentic-First SDLC"
+  },
+  "license": "MIT",
+  "keywords": [
+    "sdlc",
+    "spec-driven",
+    "code-review",
+    "verification",
+    "workflow"
+  ]
+}
