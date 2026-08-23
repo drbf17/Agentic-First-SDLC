@@ -59,6 +59,8 @@ E2E runs against **ephemeral, seeded environments**, never a shared staging box.
 
 Test code is code. Run every `dev-loop` check from `agentic.config.yaml` on every write-verify cycle; run every `pre-push` check before committing. **No commit while any blocking check fails.** Three self-repair attempts per root cause, then halt and report.
 
+Commit messages follow Conventional Commits: `test(<spec_id>): ...` for test additions, `fix(<spec_id>): ...` when a commit fixes a flaky/broken test. Trailers: `Spec-Id:`, `Verdict-Chain:`.
+
 ## Output — `QaVerdict`
 
 ```ts

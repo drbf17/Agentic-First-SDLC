@@ -21,6 +21,14 @@ payload:
     package_manager: "pnpm"
     node_version: "22.x"
 
+  git:
+    workflow: "gitflow"              # gitflow (default) | trunk-based — see below
+    default_branch: "main"           # trunk-based base; also gitflow's `main`
+    develop_branch: "develop"        # gitflow only. Omit/ignore under trunk-based.
+    remote_provider: "github"        # default and only provider the bundled github-pr skill drives
+    commit_convention: "conventional-commits"   # fixed — see backend-dev/frontend-dev/qa-engineer
+    merge_strategy: "squash"         # squash (default/preferred) | merge | rebase
+
   checks:
     - id: lint
       category: lint                   # lint|typecheck|static|sast|format|deps|build|test
@@ -78,6 +86,41 @@ payload:
 | `runs_in` | yes | any of `dev-loop`, `pre-push`, `gate`. **Every blocking check must include `gate`.** |
 | `verified_at` | yes | timestamp of a successful invocation by the Config Agent. **No `verified_at` ⇒ the check is invalid and must not be written.** |
 | `typical_duration_seconds` | yes | measured, not estimated. Drives `runs_in` assignment. |
+
+## `payload.git` — chosen git workflow
+
+Set **once**, at bootstrap, alongside the four check categories — not per spec. Every downstream skill and agent reads this instead of assuming GitFlow.
+
+| Field | Required | Notes |
+|---|---|---|
+| `workflow` | yes | `gitflow` (default) or `trunk-based`. See comparison below. |
+| `default_branch` | yes | The trunk. `main` in both workflows. |
+| `develop_branch` | gitflow only | Integration branch feature/bugfix work targets. Ignored under `trunk-based` — there is no develop. |
+| `remote_provider` | yes | `github` is the default and the only value the bundled `github-pr` skill drives today. A different value means PR creation/merge must be done by hand or a custom skill. |
+| `commit_convention` | yes | Fixed to `conventional-commits`. Every agent commit message, and every PR title (which becomes the squash-merge commit message), follows `type(<spec_id>): summary` — see [skills/github-pr](../skills/github-pr/SKILL.md). |
+| `merge_strategy` | yes | `squash` is the SDLC's default and preferred value — one atomic commit per spec increment on `develop`/`main`. `merge` and `rebase` are supported for teams that want full sub-agent commit history preserved. |
+
+### `gitflow` (default)
+
+```
+feature/<spec_id>   ← change_type: feature — branched from develop
+bugfix/<spec_id>    ← change_type: bugfix  — branched from develop
+hotfix/<spec_id>    ← change_type: hotfix  — branched from main
+```
+
+`feature/*` and `bugfix/*` merge to `develop_branch`; `hotfix/*` merges to `main` (and is back-merged to develop by the human release process). See [skills/ship-release](../skills/ship-release/SKILL.md).
+
+### `trunk-based`
+
+```
+feature/<spec_id>   ← change_type: feature — branched from default_branch
+bugfix/<spec_id>    ← change_type: bugfix  — branched from default_branch
+hotfix/<spec_id>    ← change_type: hotfix  — branched from default_branch
+```
+
+No `develop`, no `release/*`. Every branch is short-lived and branches from — and merges directly (squash, by default) back into — `default_branch`. The prefix still encodes intent for `git log`/PR triage even though the base branch never varies.
+
+Either way, **`default_branch`/`develop_branch` are only ever updated via a pull request**, after all verdicts are green — never a direct push, from an agent or otherwise.
 
 ## `runs_in` budgets
 

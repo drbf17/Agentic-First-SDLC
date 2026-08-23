@@ -40,6 +40,7 @@ Before any commit, run every `pre-push` check. **No commit while any `enforcemen
 
 | Rule | Value |
 |---|---|
+| Commit messages | Conventional Commits: `feat(<spec_id>): ...` / `fix(<spec_id>): ...` / `refactor`\|`test`\|`chore` for supporting commits. Trailers: `Spec-Id:`, `Verdict-Chain:` |
 | Component size / responsibility | ~150 LOC, exactly **1** responsibility |
 | Prop-drilling before a state boundary is required | max **3** levels |
 | State tiers | local in-component · store slice (typed, declared) · server state through **one** fetching layer |

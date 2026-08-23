@@ -12,6 +12,9 @@ Leave `existing_figma` blank if there is no design yet; that triggers the Protot
 ---
 spec_id: ""                          # kebab-case, unique. e.g. "checkout-guest-flow"
 title: ""
+change_type: ""                      # REQUIRED: "feature" | "bugfix" | "hotfix"
+                                     # drives which branch type Stage 3 creates and what
+                                     # base branch it starts from — see reference/config-schema.md
 
 actors:
   - name: ""                         # who acts. e.g. "Guest shopper"

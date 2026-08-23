@@ -49,6 +49,21 @@ Stage 7/8 Release + HITL    ship-release skill        human approves the merge
 
 **Stage P is deliberately not Stage 1.** `spec-writer` is collaborative (it drafts with the PO); `spec-judge` is adversarial (it interrogates the draft). Keeping them as separate skills means the same agent never both helps write a spec and grades it — the grilling pass in Stage 1 runs at full rigor regardless of whether Stage P happened.
 
+## Branching, before Stage 3 starts
+
+This is the one execution step the orchestrator itself performs rather than delegating — it's pipeline sequencing (which branch subsequent work lands on), not build work, and it has to happen exactly once, before any build agent's first commit.
+
+1. Read `payload.git` from `agentic.config.yaml` (`workflow`, `default_branch`, `develop_branch`). Missing ⇒ config is stale or predates this field — halt and send back to `config-bootstrap`.
+2. Read `change_type` from the sealed spec (`feature` | `bugfix` | `hotfix`).
+3. Compute the branch name: `<change_type-prefix>/<spec_id>` — prefix is `feature`, `bugfix`, or `hotfix` verbatim.
+4. Compute the base branch:
+   - `workflow: gitflow` — `hotfix` bases on `default_branch` (main); `feature`/`bugfix` base on `develop_branch`.
+   - `workflow: trunk-based` — every `change_type` bases on `default_branch`. There is no develop.
+5. `git fetch`, then create and check out the branch from the resolved base (`git checkout -b <branch> origin/<base>`). If the branch already exists (resuming a spec), check it out instead of recreating it — never force-recreate over existing agent work.
+6. Only once the branch is checked out do you dispatch the build agents below. Every agent commit for this spec lands on this one branch, scoped to that agent's `owns` globs.
+
+This branch — never `develop_branch`/`default_branch` directly — is what build agents commit to, and it's what `ship-release` later opens the PR from.
+
 ## Dispatching the build phase (Stage 3)
 
 These three run **concurrently** — send them in a single message so they execute in parallel:
@@ -73,7 +88,7 @@ So:
 1. **No config, no pipeline.** Missing or stale `agentic.config.yaml` halts everything.
 2. **Sealed specs are immutable.** There is no un-seal. Amendments are delta specs chained by `parent_hash`.
 3. **Never a silent assumption.** Unanswerable questions shrink scope into `deferred_decisions` with an owner, a default, and an expiry.
-4. **Agents never merge.** They push to `feature/<spec-id>`; a human merges.
+4. **Agents never merge.** They push to the branch created in "Branching, before Stage 3 starts" (`feature/`, `bugfix/`, or `hotfix/<spec_id>`, per `payload.git.workflow`); `develop_branch`/`default_branch` is only ever updated via a pull request, and only a human merges it.
 5. **Security BLOCK has no override** — not by a sealed spec, not by a deadline. A sealed-but-vulnerable pattern means the spec was wrong.
 6. **Hash-pinning is universal.** Any agent finding a changed `content_hash` mid-flight halts and re-reads.
 

@@ -40,6 +40,7 @@ Before any commit, run every check whose `runs_in` includes `pre-push`. **No com
 
 | Rule | Value |
 |---|---|
+| Commit messages | Conventional Commits: `feat(<spec_id>): ...` / `fix(<spec_id>): ...` / `refactor`\|`test`\|`chore` for supporting commits. Trailers: `Spec-Id:`, `Verdict-Chain:` |
 | Migrations | reversible up/down pairs |
 | Irreversible migrations | **human sign-off required** + separate `release/*-migration` lineage |
 | Compatibility | backward-compatible by default; breaking needs explicit `BREAKING` flag + deprecation window |

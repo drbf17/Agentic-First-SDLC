@@ -83,6 +83,7 @@ payload: { ... }
 ```ts
 type SealedSpec = {
   content_hash: string; spec_id: string; parent_hash?: string;
+  change_type: "feature" | "bugfix" | "hotfix";   // selects branch prefix + base branch, Stage 3
   acceptance_criteria: AC[];
   edge_cases: EdgeCase[];              // >= number of decision points
   nfrs: QuantifiedNFR[];               // every one carries a number and a unit

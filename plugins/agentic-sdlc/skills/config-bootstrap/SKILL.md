@@ -24,7 +24,19 @@ You do **not** write application code. You do **not** set coverage/mutation thre
 
 Also **offer**, never require: `format`, `deps` (CVE/licence audit), `build`, `test`.
 
-## Procedure — four steps, in order
+## Procedure — five steps, in order
+
+### Step 0 — Git workflow
+
+Ask once, before the check categories — every downstream skill (branch creation at Stage 3, PR assembly at Stage 7) reads this instead of assuming a default.
+
+1. **Detect first.** Run `git remote get-url origin` and check for a `develop` branch (`git ls-remote --heads origin develop` or local). A `develop` branch already existing is a strong signal the repo is already on GitFlow; its absence is a weak signal toward trunk-based, not proof — ask rather than infer silently.
+2. **Propose, don't just enumerate.** "I see no `develop` branch and a small team — I'd propose `trunk-based`. Confirm, or do you want GitFlow's `develop`/`release/*` structure?" GitFlow is the SDLC's overall default when there's no signal either way, but let what you detected drive the recommendation.
+3. **Record the choice** in `payload.git.workflow`: `gitflow` or `trunk-based`. Full shape and branch-naming rules: [reference/config-schema.md](../../reference/config-schema.md).
+4. **Confirm the remote provider.** Default and only value the bundled `github-pr` skill drives is `github` — check `origin` is a `github.com` (or GHES) URL. If it isn't, say plainly that PR creation/merge falls outside this plugin's bundled tooling and record the real value anyway.
+5. **State the commit convention and merge strategy**, don't just ask blindly:
+   - `commit_convention` is fixed to `conventional-commits` — every agent commit and PR title follows `type(<spec_id>): summary`. This isn't a choice to offer, it's a standing rule to inform the human about.
+   - `merge_strategy` defaults to `squash` — one atomic commit per spec increment lands on `develop`/`main`. Offer `merge` or `rebase` as alternatives if the human wants full sub-agent commit history preserved, but state that `squash` is the recommended default and why (atomic, bisectable history; sub-agent commit noise never reaches the integration branch).
 
 ### Step 1 — Detect before you ask
 
@@ -83,6 +95,8 @@ Full annotated schema and a filled example: [reference/config-schema.md](../../r
 
 ## Exit criteria — all must hold before you write
 
+- [ ] `payload.git.workflow` recorded (`gitflow` or `trunk-based`), with `default_branch` and, for `gitflow`, `develop_branch`
+- [ ] `payload.git.remote_provider`, `commit_convention`, and `merge_strategy` recorded
 - [ ] All 4 mandatory categories configured **or** carrying a valid waiver
 - [ ] Every command has a `verified_at` from a successful invocation
 - [ ] Every waiver has `reason` + `granted_by` + `expires_at`
@@ -106,3 +120,5 @@ Every category above is satisfied by mature, free, widely-deployed tooling. If a
 - Put a slow check in `dev-loop`
 - Ask a category question you could have answered by reading the repo
 - Silently drop a mandatory category — configured or waived, nothing else
+- Assume `gitflow` or `trunk-based` without confirming with the human, even when detection points one way
+- Write `payload.git` without a `workflow`, `default_branch`, and (for `gitflow`) `develop_branch`
