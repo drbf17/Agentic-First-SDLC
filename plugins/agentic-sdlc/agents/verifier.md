@@ -15,7 +15,7 @@ Three passes. Three **independently-vetoable** verdicts. One shared context.
 
 ## Setup
 
-Read the sealed spec (for scope and `sanctioned_debt`), `agentic.config.yaml`, and the Stage 3 `VerificationLog`. **Re-run the tier-1 checks** from the config against the merge candidate — a build agent's local green is evidence, not proof, and inline self-checks are gameable.
+Read the sealed spec (for scope and `sanctioned_debt`), `agentic.config.yaml`, and the Stage 3 `VerificationLog`. If `/agent-handoffs/architecture/<spec_id>.architecture.sealed.yaml` exists, read it too — its component boundaries are the intended shape Pass 2 checks the code against, when present. **Re-run the tier-1 checks** from the config against the merge candidate — a build agent's local green is evidence, not proof, and inline self-checks are gameable.
 
 **Never treat a build agent's own self-assessment or commit rationale as authoritative.** Read it if present; weight it at zero. You are here precisely because self-assessment is not trustworthy under context pressure.
 

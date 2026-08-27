@@ -12,6 +12,7 @@ Loaded on demand. The full rationale for every number here lives in the workflow
     │   ├── <spec_id>.v0.raw.md        ← Stage 0 (PO submission)
     │   ├── <spec_id>.v1.sealed.yaml   ← Stage 1
     │   └── deltas/<parent_hash>-<n>.yaml
+    ├── architecture/<spec_id>.architecture.sealed.yaml  ← Stage 1.5, OPTIONAL, human-invoked
     ├── wireframes/<spec_id>.wireframe.json    ← Stage 2
     ├── contracts/<spec_id>.api.v<semver>.yaml ← Stage 3 (Backend, published FIRST)
     ├── manifests/
@@ -31,8 +32,8 @@ Every handoff artifact carries these fields so any agent or human can validate p
 
 ```yaml
 schema_version: "1.0"
-artifact_type: SealedSpec | WireframeSpec | ApiContract | OwnershipManifest
-             | ComponentManifest | VerificationLog | SecurityVerdict
+artifact_type: SealedSpec | ArchitectureDecisionRecord | WireframeSpec | ApiContract
+             | OwnershipManifest | ComponentManifest | VerificationLog | SecurityVerdict
              | ReviewVerdict | QaVerdict | HitlRequest
 spec_id: string
 content_hash: string      # sha256 of payload — what downstream agents pin to
@@ -58,6 +59,9 @@ payload: { ... }
 | **1 — Spec** | avg ambiguity | **< 0.15** |
 | 1 | max single-item ambiguity | **≤ 0.4** |
 | 1 | grilling iterations | ≤ 5 → human Tech Lead |
+| **1.5 — Architecture** *(optional, human-invoked)* | avg ambiguity | **< 0.15**, same math as Stage 1 |
+| 1.5 | max single-item ambiguity | **≤ 0.4** |
+| 1.5 | grilling iterations | ≤ 5 → human escalation |
 | **2 — Prototype** | AC traceability | 100% |
 | 2 | gate criteria | 6 (incl. blocking PII scan) |
 | **3 — Build** | blocking tier-1 checks failing at commit | **0** |
@@ -95,6 +99,21 @@ type SealedSpec = {
   iterations_used: number;             // <= 5
   owasp_required: boolean;
   repo_boundaries?: RepoBoundaries;    // passed through untouched by grilling
+  architecture_recommendation: {       // advisory — never gates the seal
+    verdict: "current_architecture_sufficient" | "requires_review";
+    drivers: string[];                 // required, non-empty when verdict is requires_review
+  };
+};
+
+type ArchitectureDecisionRecord = {    // Stage 1.5, OPTIONAL — human-invoked via architecture-judge
+  content_hash: string; spec_id?: string; parent_hash?: string;   // parent_hash → the SealedSpec, when tied to one
+  decision: string;                    // the architectural choice being sealed
+  components: { name: string; responsibility: string }[];
+  data_flow: string;
+  failure_modes: { scenario: string; behavior: string }[];
+  alternatives_considered: { option: string; rejected_because: string }[];
+  ambiguity_score: { avg: number; max_item: number };   // same math and thresholds as SealedSpec
+  iterations_used: number;             // <= 5, same cap as spec-judge
 };
 
 type VerificationLog = {

@@ -4,7 +4,7 @@
     {
       "name": "agentic-sdlc",
       "displayName": "Agentic-First SDLC",
-      "description": "Spec-driven, gate-enforced development lifecycle. Config Agent bootstraps deterministic checks; Spec Judge grills the PO until the spec is unambiguous; parallel build agents implement against a locked contract; a single verifier runs Security, Architecture, and QA as three independently-vetoable passes.",
+      "description": "Spec-driven, gate-enforced development lifecycle. Config Agent bootstraps deterministic checks; Spec Judge grills the PO until the spec is unambiguous and flags whether it needs a special architecture; an optional, human-invoked Architecture Judge can grill that design too; parallel build agents implement against a locked contract; a single verifier runs Security, Architecture, and QA as three independently-vetoable passes.",
       "version": "1.0.0",
       "author": "Agentic-First SDLC",
       "source": {

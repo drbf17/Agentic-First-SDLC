@@ -1,6 +1,6 @@
 # Agentic-First SDLC
 
-A spec-driven development lifecycle for Claude Code: six skills and five subagents that take a feature from a Product Owner's written spec through implementation, verification, and a human-approved merge — with deterministic quality gates enforced inside the development loop rather than requested in a prompt.
+A spec-driven development lifecycle for Claude Code: seven skills and five subagents that take a feature from a Product Owner's written spec through implementation, verification, and a human-approved merge — with deterministic quality gates enforced inside the development loop rather than requested in a prompt.
 
 Distributed as a Claude Code plugin. Install once per repo; teammates get it automatically.
 
@@ -42,7 +42,7 @@ Tier 1 is the strongest instrument available, and it is the only tier a workflow
 
 ## Architecture
 
-### Eleven components, three groups
+### Twelve components, three groups
 
 ```
                         ┌─ Stage B ──────────────────────────────────┐
@@ -56,7 +56,15 @@ Tier 1 is the strongest instrument available, and it is the only tier a workflow
                                            │ binds everything below
    ┌───────────────────────────────────────▼──────────────────────────────────┐
    │  Stage 0/1   spec-judge      (skill, interactive)  → SealedSpec           │
-   │              adversarial — full rigor regardless of Stage P              │
+   │              adversarial — full rigor; also recommends architecture      │
+   │              review via architecture_recommendation, never gates on it   │
+   │                                                                           │
+   │              orchestrator branches HERE — immediately after the seal,    │
+   │              before Stage 2 — and commits the sealed spec to it          │
+   │                                                                           │
+   │  Stage 1.5   architecture-judge (skill, interactive) → ArchitectureDecisionRecord│
+   │              OPTIONAL, human-invoked only — never auto-dispatched        │
+   │                                                                           │
    │  Stage 2     prototyper      (agent)               → WireframeSpec        │
    │                                                                           │
    │  Stage 3     backend-dev ─┐                                               │
@@ -84,7 +92,8 @@ So:
 |---|---|---|
 | `spec-writer` | **skill**, optional | Collaborative drafting with a human. Deliberately a *different* skill from `spec-judge` — the agent that helps write a spec shouldn't also be the one grading it. |
 | `config-bootstrap` | **skill** | It is an interrogation of a human. A subagent can't conduct one. |
-| `spec-judge` | **skill** | Same — it grills the PO across up to 5 iterations of dialogue, adversarially. |
+| `spec-judge` | **skill** | Same — it grills the PO across up to 5 iterations of dialogue, adversarially. Also flags whether the spec needs a special architecture, but never decides that itself. |
+| `architecture-judge` | **skill**, optional | `spec-judge`'s structural twin for design instead of requirements — grills an architect or tech lead's proposal the same adversarial way. **Human-invoked only**; the orchestrator never dispatches it. |
 | `verify-gate`, `ship-release` | **skills** | Procedures the main agent follows, with human decision points. |
 | `backend-dev`, `frontend-dev`, `qa-engineer` | **agents** | Genuinely concurrent work on separate file boundaries. |
 | `prototyper`, `verifier` | **agents** | Context-heavy analysis producing a structured report. |
@@ -110,6 +119,7 @@ This is the Determinism Principle applied to tool grants: **remove the capabilit
 | P *(optional)* | none — `spec-writer` never scores or blocks | n/a |
 | B | mandatory check categories configured or waived | **4 of 4** (lint · typecheck · static · SAST) |
 | 1 | spec ambiguity | avg **< 0.15** AND max item **≤ 0.4**, ≤ 5 iterations |
+| 1.5 *(optional, human-invoked)* | architecture ambiguity, same math as Stage 1 | avg **< 0.15** AND max item **≤ 0.4**, ≤ 5 iterations — never blocks Stage 2/3 |
 | 2 | acceptance criteria traced to screens | 100%, 6 gates incl. blocking PII scan |
 | 3 | blocking tier-1 checks failing at commit | **0** |
 | 4 | Critical / High SAST, secrets, KEV CVEs | **0 — no override, ever** |
@@ -148,7 +158,7 @@ In any repo where you want the workflow:
 /plugin install agentic-sdlc@agentic-first-sdlc
 ```
 
-Verify: `/plugin list` shows `agentic-sdlc`, and typing `/` lists the six skills.
+Verify: `/plugin list` shows `agentic-sdlc`, and typing `/` lists the seven skills.
 
 ### Option B — auto-bootstrap your whole team (recommended for shared repos)
 
@@ -264,6 +274,17 @@ CONTINUE (iteration 2)
 
 Answer, iterate. It seals when the math clears. Can't answer something? Say so — scope shrinks and the item is logged with an owner, a default, and an expiry. That's a supported outcome; a silent guess is not.
 
+The moment it seals, two things happen automatically:
+
+- The orchestrator creates and checks out this spec's working branch (`feature/checkout-guest`, off the base your `payload.git.workflow` specifies) and commits the sealed spec to it as the first commit — before Stage 2 even starts, so every handoff artifact from here on is versioned, not just files on disk.
+- `spec-judge` states an `architecture_recommendation`: `current_architecture_sufficient`, or `requires_review` with the specific driver named (new datastore, new integration, an NFR the current design can't hit, etc).
+
+> **Design needs a second look? This step is optional.**
+> ```
+> You:  /architecture-judge  agent-handoffs/architecture/checkout-guest.v0.raw.md
+> ```
+> `architecture-judge` grills whoever wrote the proposal — the same adversarial stance and ambiguity math as `spec-judge`, aimed at the design instead of the requirements — and seals an `ArchitectureDecisionRecord` that Backend and Frontend then pin to alongside the spec. **Nothing downstream blocks on this.** If you skip it, Stage 3 proceeds against the sealed spec alone, same as always — that's a supported choice, not a gap.
+
 **3. Build.** Backend publishes and locks the API contract first; Frontend builds mock-backed against that hash without waiting for a live API; QA writes tests from the acceptance criteria — never from the implementation.
 
 ```
@@ -308,6 +329,7 @@ Opens the PR with the scorecard attached, deploys to staging, runs smoke tests, 
 | Set up a new repo | `/config-bootstrap` |
 | Help drafting a spec (optional) | `/spec-writer` |
 | Seal a spec | `/spec-judge <path>` |
+| Stress-test an architecture decision (optional) | `/architecture-judge <path>` |
 | Run the gates | `/verify-gate` |
 | Open the PR | `/ship-release` |
 | Wireframes for a spec | "Run the prototyper for `<spec_id>`" |
@@ -321,11 +343,12 @@ agentic-first-sdlc/
 ├── .claude-plugin/marketplace.json      ← marketplace manifest (edit REPLACE-ME)
 ├── plugins/agentic-sdlc/
 │   ├── .claude-plugin/plugin.json
-│   ├── skills/                          ← 6 skills, auto-discovered
+│   ├── skills/                          ← 7 skills, auto-discovered
 │   │   ├── agentic-sdlc/SKILL.md        ← router
 │   │   ├── spec-writer/SKILL.md         ← Stage P, optional, collaborative
 │   │   ├── config-bootstrap/SKILL.md    ← Stage B
 │   │   ├── spec-judge/SKILL.md          ← Stages 0-1, adversarial
+│   │   ├── architecture-judge/SKILL.md  ← Stage 1.5, optional, human-invoked only
 │   │   ├── verify-gate/SKILL.md         ← Stages 4-6
 │   │   └── ship-release/SKILL.md        ← Stages 7-8
 │   ├── agents/                          ← 5 subagents
@@ -333,7 +356,7 @@ agentic-first-sdlc/
 │   │   ├── qa-engineer.md · verifier.md (judge-only, no Write tool)
 │   │   └──
 │   └── reference/                       ← loaded on demand, not per-turn
-│       ├── thresholds.md · config-schema.md · spec-template.md
+│       ├── thresholds.md · config-schema.md · spec-template.md · architecture-template.md
 ├── templates/
 │   ├── settings.json                    ← team auto-bootstrap
 │   └── CLAUDE.md                        ← project instructions
@@ -349,7 +372,7 @@ your-project/
 ├── CLAUDE.md
 ├── .claude/settings.json
 └── agent-handoffs/              ← every stage's output, plain files, git-tracked
-    ├── specs/ · wireframes/ · contracts/ · manifests/ · verdicts/ · release/
+    ├── specs/ · architecture/ (optional) · wireframes/ · contracts/ · manifests/ · verdicts/ · release/
 ```
 
 `/agent-handoffs` is a plain visible directory, not a database or a service. Git already provides tamper-evident history, works offline, and needs no infrastructure to run. Any agent — or human — can pick up a spec cold by reading these files.

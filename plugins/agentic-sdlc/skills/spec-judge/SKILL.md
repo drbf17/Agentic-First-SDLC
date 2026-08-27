@@ -93,9 +93,27 @@ Maximum **5** iterations. If iteration 5 completes and thresholds still aren't m
   blocking_items: [ { item, score, why_unresolved, po_response_so_far } ] }
 ```
 
+## Architecture fit — assessed once, in the iteration you're about to seal
+
+Before you seal, decide whether this spec fits inside the repo's current architecture or demands a special architectural definition. **This is advisory. It never blocks the seal and is not part of the ambiguity score** — it is a separate verdict you hand to the human alongside SEAL, the same way you'd flag a risk you can't grade.
+
+Look for a baseline first: `ARCHITECTURE.md`, `docs/architecture/`, or a prior `/agent-handoffs/architecture/<spec_id-or-related>.architecture.sealed.yaml` from an earlier `architecture-judge` run in this repo. No baseline found is itself a signal, not a blank check — lean `requires_review` for anything beyond a small, additive change when there's nothing documented to check it against.
+
+Signals that push toward `requires_review` — the spec implies at least one of:
+
+- A new service/process boundary, or a new datastore/storage pattern not already in use
+- A new class of external integration (payment processor, identity provider, message broker)
+- A cross-cutting concern with no existing precedent in the repo (first async job queue, first websocket channel, first multi-tenant boundary)
+- A breaking change to an existing API or data topology
+- An NFR (from the spec's `nfrs`) the current architecture has no documented path to meet — e.g. a p95 target that implies caching or sharding that doesn't exist yet
+
+None of the above present ⇒ `current_architecture_sufficient`. One or more present ⇒ `requires_review`, and you must name the specific driver(s) — never emit `requires_review` without saying what triggered it.
+
+Emit both the verdict and its reasoning as `architecture_recommendation` in the sealed payload (schema: [reference/thresholds.md](../../reference/thresholds.md)), **and** say it plainly in your seal message to the PO/Tech Lead — never bury it in the artifact alone. If `requires_review`, name the optional `architecture-judge` skill as the next step and make clear it's the human's call whether to run it before Stage 2/3 starts.
+
 ## Sealing
 
-Compute a content hash over the normalized spec body; write to `/agent-handoffs/specs/<spec_id>/<spec_id>.v1.sealed.yaml`. Every downstream agent pins to that hash and halts if it goes stale.
+Compute a content hash over the normalized spec body; write to `/agent-handoffs/specs/<spec_id>/<spec_id>.v1.sealed.yaml`. Every downstream agent pins to that hash and halts if it goes stale. Include `architecture_recommendation` in the payload — sealing is not gated on it, but it must be present.
 
 **There is no un-seal operation.** It does not exist. Un-sealing would cascade-invalidate every hash-pinned downstream artifact at once. All post-seal changes are **delta specs**: a new sealed artifact carrying `parent_hash`, forming an append-only chain — from a Prototyper's `SpecAmendmentRequest` to a one-field additive API change.
 
@@ -138,6 +156,14 @@ Compute a content hash over the normalized spec body; write to `/agent-handoffs/
 
 ### Verdict
 CONTINUE (iteration N+1) | SEAL | ESCALATE_HUMAN_TECH_LEAD
+```
+
+On a `SEAL` verdict, append one more block — the architecture fit assessment (see above), stated plainly, not just written into the artifact:
+
+```
+### Architecture fit
+current_architecture_sufficient | requires_review — <named driver(s)>
+(if requires_review) Optional next step: run `architecture-judge` before Stage 2/3, or proceed as-is — your call.
 ```
 
 ## Never

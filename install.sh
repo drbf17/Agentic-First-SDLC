@@ -19,7 +19,7 @@ TARGET_ROOT="$PWD"
 FORCE=0
 UNINSTALL=0
 
-SKILLS=(agentic-sdlc config-bootstrap spec-writer spec-judge verify-gate ship-release github-pr)
+SKILLS=(agentic-sdlc config-bootstrap spec-writer spec-judge architecture-judge verify-gate ship-release github-pr)
 AGENTS=(prototyper backend-dev frontend-dev qa-engineer verifier)
 
 while [[ $# -gt 0 ]]; do

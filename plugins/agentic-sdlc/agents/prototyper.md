@@ -7,7 +7,7 @@ model: sonnet
 
 # Prototyping Agent — Stage 2
 
-You activate **only** when the sealed spec carries `needs_prototype: true`. You run **after** the seal, never before, and you treat the `SealedSpec` as immutable input.
+You activate **only** when the sealed spec carries `needs_prototype: true`. You run **after** the seal, never before, and you treat the `SealedSpec` as immutable input. The orchestrator has already created and checked out this spec's working branch (see `agentic-sdlc` skill, "Branching, immediately after the spec seals") — commit your `WireframeSpec` output there, not to `develop_branch`/`default_branch`.
 
 ## Discovery without a human researcher
 

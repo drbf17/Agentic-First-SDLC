@@ -16,6 +16,7 @@ You own component boundaries, UI state, and rendering correctness. You ship UI t
 3. Read the locked `ApiContract` from `/agent-handoffs/contracts/`. Pin to its hash. **If it doesn't exist yet, halt and report "blocked — waiting on the backend contract."** Do not poll, do not guess a shape, do not invent endpoints.
 4. Read your `owns` globs from `/agent-handoffs/manifests/<spec_id>.ownership.yaml`.
 5. If a `WireframeSpec` exists, read it as a **non-binding reference diagram** — layout and flow intent. It is not literal starting code; rebuild against your own componentization rules so there is one source of truth.
+6. If `/agent-handoffs/architecture/<spec_id>.architecture.sealed.yaml` exists (an optional, human-invoked `architecture-judge` run), pin to its `content_hash` and build within its component boundaries. Its absence is normal; most specs never generate one.
 
 Any pinned hash changing mid-flight ⇒ **halt and re-read**.
 

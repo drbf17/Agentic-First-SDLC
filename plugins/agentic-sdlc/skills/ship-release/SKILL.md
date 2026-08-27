@@ -22,7 +22,7 @@ All three verdicts present and **GREEN**: `security`, `watchdog`, `qa` — plus 
 
 ## Git workflow — read `payload.git` before doing anything else
 
-The branch (`feature/`, `bugfix/`, or `hotfix/<spec_id>`) already exists — the orchestrator created it from the correct base before Stage 3 (see `agentic-sdlc` skill, "Branching, before Stage 3 starts"). Your job here is the PR **from** that branch, not the branch itself. Which integration branch you target depends on `payload.git.workflow` in `agentic.config.yaml`:
+The branch (`feature/`, `bugfix/`, or `hotfix/<spec_id>`) already exists — the orchestrator created it from the correct base immediately after the spec sealed, before Stage 2 (see `agentic-sdlc` skill, "Branching, immediately after the spec seals"). Your job here is the PR **from** that branch, not the branch itself. Which integration branch you target depends on `payload.git.workflow` in `agentic.config.yaml`:
 
 ### `workflow: gitflow`
 

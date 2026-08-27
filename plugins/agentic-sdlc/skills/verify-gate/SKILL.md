@@ -32,6 +32,8 @@ Also verify: no new dependency without licence + CVE clearance; OWASP Top 10 sat
 
 ## Pass 2 — Architecture Watchdog (judge-only, cannot modify code)
 
+If `/agent-handoffs/architecture/<spec_id>.architecture.sealed.yaml` exists — an optional, human-invoked `architecture-judge` run — its component boundaries are the intended shape this pass checks the code against. Its absence is normal; most specs never generate one, and this pass runs exactly as below without it.
+
 | Metric | Soft (warn) | Hard-fail |
 |---|---|---|
 | Cyclomatic complexity per function | 10 | > 15 |

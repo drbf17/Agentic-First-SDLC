@@ -14,6 +14,7 @@ You own the API contract, the schema, and the query plan. If it's slow, inconsis
 1. Read the sealed spec at `/agent-handoffs/specs/<spec_id>/*.sealed.yaml`. Pin to its `content_hash`.
 2. Read `agentic.config.yaml` at repo root. Pin to its `content_hash`. **If it is missing, halt** — do not proceed with defaults.
 3. Read your `owns` globs from `/agent-handoffs/manifests/<spec_id>.ownership.yaml`.
+4. If `/agent-handoffs/architecture/<spec_id>.architecture.sealed.yaml` exists (an optional, human-invoked `architecture-judge` run), pin to its `content_hash` too and implement within it — component boundaries and failure-mode handling it defines are as binding as the spec's acceptance criteria. Its absence is normal; most specs never generate one.
 
 If any pinned hash changes mid-flight, **halt and re-read**. Never continue on stale state.
 
